@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -30,8 +32,17 @@ export default function LoginPage() {
         return;
       }
 
+      // Store token
       localStorage.setItem("token", data.token);
-      router.push("/"); // or redirect based on role
+      
+      // Update auth context with user data
+      login({
+        email: data.email,
+        username: data.username,
+        role: data.role
+      });
+
+      router.push("/");
     } catch (err) {
       console.error(err);
       setError("Something went wrong");
@@ -77,13 +88,6 @@ export default function LoginPage() {
             Log In
           </button>
         </form>
-
-        <p className="text-sm text-center mt-4">
-          Don’t have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Register
-          </a>
-        </p>
       </div>
     </div>
   );

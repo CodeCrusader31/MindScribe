@@ -19,6 +19,7 @@ export async function POST(req) {
       username,
       email,
       password: hashedPassword,
+      role,
       profession,
       experiences
     });

@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
-  const { role, setRole } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setRole(null);
-    router.push("/login");
+    logout();
+    router.push("/");
   };
 
   return (
@@ -20,38 +19,40 @@ const Navbar = () => {
         <Link href="/">Home</Link>
         <Link href="/blog">Blog</Link>
 
-        {role === "reader" && (
-          <span className="text-blue-600">Read Blogs</span>
+        {user?.role === "author" && (
+          <Link 
+            href="/author/addProduct" 
+            className="text-green-600 hover:text-green-700 font-medium"
+          >
+            Create Post
+          </Link>
         )}
 
-        {role === "author" && (
-          <Link href="/create-blog">Create Blog</Link>
-        )}
-
-        {role === "admin" && (
-          <Link href="/admin-dashboard">Admin Dashboard</Link>
+        {user?.role === "admin" && (
+          <Link href="/admin">Admin Dashboard</Link>
         )}
       </div>
 
-      <div className="flex gap-4">
-        {!role && (
+      <div className="flex items-center gap-4">
+        {user ? (
+          <div className="flex items-center gap-4">
+            <span className="text-gray-700">Welcome, {user.username}</span>
+            <button
+              onClick={handleLogout}
+              className="text-red-600 hover:underline"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
           <>
-            <Link href="/auth/login" className="text-green-600 hover:underline">
+            <Link href="/auth/login" className="text-blue-600 hover:underline">
               Login
             </Link>
             <Link href="/auth/register" className="text-blue-600 hover:underline">
               Register
             </Link>
           </>
-        )}
-
-        {role && (
-          <button
-            onClick={handleLogout}
-            className="text-red-600 hover:underline"
-          >
-            Logout
-          </button>
         )}
       </div>
     </nav>
