@@ -4,11 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
+// Define role-based routes mapping
+const ROLE_ROUTES = {
+  admin: "/admin",
+  author: "/author/addProduct",
+  reader: "/",
+  default: "/", // Fallback route for unknown roles
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,6 +26,7 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -28,24 +38,28 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Invalid credentials");
-        return;
+        throw new Error(data.message || "Invalid credentials");
       }
 
-      // Store token
+      // Store token securely
       localStorage.setItem("token", data.token);
-      
+
       // Update auth context with user data
       login({
         email: data.email,
         username: data.username,
-        role: data.role
+        role: data.role,
       });
 
-      router.push("/");
+      // Get the route based on role or use default route
+      const redirectPath = ROLE_ROUTES[data.role] || ROLE_ROUTES.default;
+      router.push(redirectPath);
+
     } catch (err) {
-      console.error(err);
-      setError("Something went wrong");
+      console.error("Login error:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,6 +78,7 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -76,16 +91,21 @@ export default function LoginPage() {
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>
+          )}
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            className={`w-full bg-blue-600 text-white py-2 rounded-md transition
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+            disabled={isLoading}
           >
-            Log In
+            {isLoading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
       </div>
