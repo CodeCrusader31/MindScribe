@@ -15,7 +15,7 @@ export function middleware(req) {
   const token = req.cookies.get("token")?.value;
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
   try {
@@ -23,11 +23,11 @@ export function middleware(req) {
 
     // ✅ Example: Restrict access by role
     if (pathname.startsWith("/admin") && user.role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/admin", req.url));
     }
 
     if (pathname.startsWith("/author") && !["admin", "author"].includes(user.role)) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/author/addProduct", req.url));
     }
 
     // Attach user to request (optional advanced feature)
@@ -36,7 +36,7 @@ export function middleware(req) {
     return request;
 
   } catch (err) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 }
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -13,23 +13,29 @@ const Navbar = () => {
     router.push("/");
   };
 
+  // Prevent flickering or false state
+  if (loading) return null;
+
   return (
     <nav className="flex items-center justify-between p-4 bg-gray-100 shadow-sm">
       <div className="flex gap-4">
         <Link href="/">Home</Link>
-        <Link href="/blog">Blog</Link>
 
         {user?.role === "author" && (
-          <Link 
-            href="/author/addProduct" 
+          <Link
+            href="/author/addProduct"
             className="text-green-600 hover:text-green-700 font-medium"
           >
             Create Post
           </Link>
         )}
-
         {user?.role === "admin" && (
-          <Link href="/admin">Admin Dashboard</Link>
+          <Link
+            href="/admin"
+            className="text-red-600 hover:text-red-700 font-medium"
+          >
+            Admin Dashboard
+          </Link>
         )}
       </div>
 
@@ -49,7 +55,10 @@ const Navbar = () => {
             <Link href="/auth/login" className="text-blue-600 hover:underline">
               Login
             </Link>
-            <Link href="/auth/register" className="text-blue-600 hover:underline">
+            <Link
+              href="/auth/register"
+              className="text-blue-600 hover:underline"
+            >
               Register
             </Link>
           </>

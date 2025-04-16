@@ -4,20 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
-// Define role-based routes mapping
-const ROLE_ROUTES = {
-  admin: "/admin",
-  author: "/author/addProduct",
-  reader: "/",
-  default: "/", // Fallback route for unknown roles
-};
-
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,7 +17,6 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -36,30 +26,37 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
+      console.log("Login response data:", data);
 
       if (!res.ok) {
-        throw new Error(data.message || "Invalid credentials");
+        setError(data.message || "Invalid credentials");
+        return;
       }
 
-      // Store token securely
+      // Store token
       localStorage.setItem("token", data.token);
 
       // Update auth context with user data
       login({
-        email: data.email,
-        username: data.username,
-        role: data.role,
+        email: data.user.email,
+        username: data.user.username,
+        role: data.user.role,
       });
 
-      // Get the route based on role or use default route
-      const redirectPath = ROLE_ROUTES[data.role] || ROLE_ROUTES.default;
-      router.push(redirectPath);
-
+      // Role-based redirect
+      if (data.user.role === "admin") {
+        router.push("/admin");
+        console.log("User Role:", data.user.role);
+      } else if (data.user.role === "author") {
+        router.push("/author");
+        console.log("User Role:", data.user.role);
+      } else {
+        router.push("/");
+        console.log("User Role:", data.user.role);
+      }
     } catch (err) {
-      console.error("Login error:", err);
-      setError(err.message || "Something went wrong");
-    } finally {
-      setIsLoading(false);
+      console.error(err);
+      setError("Something went wrong");
     }
   };
 
@@ -78,7 +75,6 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               required
-              disabled={isLoading}
             />
           </div>
 
@@ -91,21 +87,16 @@ export default function LoginPage() {
               value={formData.password}
               onChange={handleChange}
               required
-              disabled={isLoading}
             />
           </div>
 
-          {error && (
-            <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
-            className={`w-full bg-blue-600 text-white py-2 rounded-md transition
-              ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-            disabled={isLoading}
+            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
           >
-            {isLoading ? 'Logging in...' : 'Log In'}
+            Log In
           </button>
         </form>
       </div>

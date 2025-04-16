@@ -1,21 +1,38 @@
 'use client';
-import { assets } from '@/Assests/assets';
-import Image from 'next/image';
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext'; // Import your Auth context
 import axios from 'axios';
-import { toast } from 'react-toastify'; // Import Toast for notifications
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { set } from 'mongoose';
+import Image from 'next/image';
+import { assets } from '@/Assests/assets';
 
 const Page = () => {
+  const { user, loading } = useAuth(); // Get user data from Auth context
+  const router = useRouter();
   const [image, setImage] = useState(null);
   const [data, setData] = useState({
     title: '',
     description: '',
     category: 'Startup',
-    author: 'Alex Bennett',
-    authorImg: '/author_img.png',
+    author: '',  // This will be set to the logged-in user's name
+    authorImg: '', // This will be set to the logged-in user's image
   });
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== 'author')) {
+      router.push('/auth/login'); // Redirect if user is not logged in or role is not author
+    } else if (user) {
+      // Set the author's name and image based on the logged-in user
+      setData((prevData) => ({
+        ...prevData,
+        author: user.username || 'Anonymous',  // Default to 'Anonymous' if no name is available
+        authorImg: user.image || '/default-author-img.png', // Default to a placeholder image if no image exists
+      }));
+    }
+  }, [user, loading, router]);
 
   const onChangeHandler = (event) => {
     const { name, value } = event.target;
@@ -30,23 +47,23 @@ const Page = () => {
       formData.append('title', data.title);
       formData.append('description', data.description);
       formData.append('category', data.category);
-      formData.append('author', data.author);
-      formData.append('authorImg', data.authorImg);
+      formData.append('author', data.author); // Author name from user context
+      formData.append('authorImg', data.authorImg); // Author image from user context
       if (image) {
         formData.append('image', image);
       }
 
       const response = await axios.post('/api/blog', formData);
-      
+
       if (response.data.success) {
         toast.success(response.data.msg || 'Blog added successfully!');
-        setImage(false);
+        setImage(null);
         setData({
-        title: '',
-        description: '',
-        category: 'Startup',
-        author: 'Alex Bennett',
-        authorImg: '/author_img.png',
+          title: '',
+          description: '',
+          category: 'Startup',
+          author: user.username || 'Anonymous', // Reset to the logged-in user's name
+          authorImg: user.image || '/default-author-img.png', // Reset the image to the logged-in user's image
         });
       } else {
         toast.error('Error while adding blog');
@@ -58,6 +75,10 @@ const Page = () => {
       toast.error('Something went wrong');
     }
   };
+
+  if (loading || !user || user.role !== 'author') {
+    return <p className="p-10">Loading...</p>; // or a spinner
+  }
 
   return (
     <form onSubmit={onSubmitHandler} className="pt-5 px-5 sm:pt-12 sm:pl-16">
