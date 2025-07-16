@@ -28,6 +28,16 @@ const Navbar = () => {
           >
             Create Post
           </Link>
+          
+        )}
+        {user?.role === "author" && (
+          <Link
+            href="/author"
+            className="text-green-600 hover:text-green-700 font-medium"
+          >
+            profile
+          </Link>
+          
         )}
         {user?.role === "admin" && (
           <Link
