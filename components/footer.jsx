@@ -1,7 +1,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { assets } from '@/Assests/assets'
-const Footer = () => {
+const footer = () => {
   return (
     <div className="flex justify-around flex-col gap-2 sm:gap-0 sm:flex-row
      bg-black py-5 items-center">  
@@ -18,4 +18,4 @@ const Footer = () => {
   )
 }
 
-export default Footer
+export default footer

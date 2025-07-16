@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { assets } from "@/Assests/assets";
 import Image from "next/image";
-import Footer from "@/components/footer";
+import Footer from "../../../components/footer";
 import Link from "next/link";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
