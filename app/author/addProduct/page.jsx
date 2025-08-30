@@ -1,8 +1,153 @@
+// 'use client';
+
+// import React, { useEffect, useState } from 'react';
+// import { useRouter } from 'next/navigation';
+// import { useAuth } from '@/context/AuthContext'; // Import your Auth context
+// import axios from 'axios';
+// import { toast } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
+// import Image from 'next/image';
+// import { assets } from '@/Assests/assets';
+
+// const Page = () => {
+//   const { user, loading } = useAuth(); // Get user data from Auth context
+//   const router = useRouter();
+//   const [image, setImage] = useState(null);
+//   const [data, setData] = useState({
+//     title: '',
+//     description: '',
+//     category: 'Startup',
+//     author: '',  // This will be set to the logged-in user's name
+//     authorImg: '', // This will be set to the logged-in user's image
+//   });
+
+//   useEffect(() => {
+//     if (!loading && (!user || user.role !== 'author')) {
+//       router.push('/auth/login'); // Redirect if user is not logged in or role is not author
+//     } else if (user) {
+//       // Set the author's name and image based on the logged-in user
+//       setData((prevData) => ({
+//         ...prevData,
+//         author: user.username || 'Anonymous',  // Default to 'Anonymous' if no name is available
+//         authorImg: user.image || '/default-author-img.png', // Default to a placeholder image if no image exists
+//       }));
+//     }
+//   }, [user, loading, router]);
+
+//   const onChangeHandler = (event) => {
+//     const { name, value } = event.target;
+//     setData((prevData) => ({ ...prevData, [name]: value }));
+//   };
+
+//   const onSubmitHandler = async (e) => {
+//     e.preventDefault();
+
+//     try {
+//       const formData = new FormData();
+//       formData.append('title', data.title);
+//       formData.append('description', data.description);
+//       formData.append('category', data.category);
+//       formData.append('author', data.author); // Author name from user context
+//       formData.append('authorImg', data.authorImg); // Author image from user context
+//       if (image) {
+//         formData.append('image', image);
+//       }
+
+//       const response = await axios.post('/api/blog', formData);
+
+//       if (response.data.success) {
+//         toast.success(response.data.msg || 'Blog added successfully!');
+//         setImage(null);
+//         setData({
+//           title: '',
+//           description: '',
+//           category: 'Startup',
+//           author: user.username || 'Anonymous', // Reset to the logged-in user's name
+//           authorImg: user.image || '/default-author-img.png', // Reset the image to the logged-in user's image
+//         });
+//       } else {
+//         toast.error('Error while adding blog');
+//       }
+
+//       console.log(response.data);
+//     } catch (error) {
+//       console.error('Error:', error);
+//       toast.error('Something went wrong');
+//     }
+//   };
+
+//   if (loading || !user || user.role !== 'author') {
+//     return <p className="p-10">Loading...</p>; // or a spinner
+//   }
+
+//   return (
+//     <form onSubmit={onSubmitHandler} className="pt-5 px-5 sm:pt-12 sm:pl-16">
+//       <p className="text-xl">Upload Thumbnail</p>
+//       <label htmlFor="image">
+//         <Image
+//           className="mt-4"
+//           src={image ? URL.createObjectURL(image) : assets.upload_area}
+//           alt="Upload Thumbnail"
+//           width={140}
+//           height={70}
+//         />
+//       </label>
+//       <input
+//         onChange={(e) => setImage(e.target.files[0])}
+//         type="file"
+//         id="image"
+//         hidden
+//         required
+//       />
+
+//       <p className="text-ml mt-4">Blog Title</p>
+//       <input
+//         name="title"
+//         onChange={onChangeHandler}
+//         value={data.title}
+//         className="w-full sm:w-[500px] mt-4 px-4 py-3 border"
+//         type="text"
+//         placeholder="Type here"
+//         required
+//       />
+
+//       <p className="text-ml mt-4">Blog Description</p>
+//       <textarea
+//         name="description"
+//         onChange={onChangeHandler}
+//         value={data.description}
+//         className="w-full sm:w-[500px] mt-4 px-4 py-3 border"
+//         placeholder="Write content here"
+//         required
+//       />
+
+//       <p className="text-ml mt-4">Blog Category</p>
+//       <select
+//         name="category"
+//         onChange={onChangeHandler}
+//         value={data.category}
+//         className="w-40 mt-4 px-4 py-3 border text-gray-500"
+//       >
+//         <option value="Startup">StartUp</option>
+//         <option value="Technology">Technology</option>
+//         <option value="Lifestyle">Lifestyle</option>
+//       </select>
+
+//       <button type="submit" className="mt-8 w-40 h-12 bg-black text-white">
+//         ADD
+//       </button>
+//     </form>
+//   );
+// };
+
+// export default Page;
+
+
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext'; // Import your Auth context
+import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,26 +155,29 @@ import Image from 'next/image';
 import { assets } from '@/Assests/assets';
 
 const Page = () => {
-  const { user, loading } = useAuth(); // Get user data from Auth context
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef(null);
+  
   const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [data, setData] = useState({
     title: '',
     description: '',
     category: 'Startup',
-    author: '',  // This will be set to the logged-in user's name
-    authorImg: '', // This will be set to the logged-in user's image
+    author: '',
+    authorImg: '',
   });
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'author')) {
-      router.push('/auth/login'); // Redirect if user is not logged in or role is not author
+      router.push('/auth/login');
     } else if (user) {
-      // Set the author's name and image based on the logged-in user
       setData((prevData) => ({
         ...prevData,
-        author: user.username || 'Anonymous',  // Default to 'Anonymous' if no name is available
-        authorImg: user.image || '/default-author-img.png', // Default to a placeholder image if no image exists
+        author: user.username || 'Anonymous',
+        authorImg: user.image || '/default-author-img.png',
       }));
     }
   }, [user, loading, router]);
@@ -39,104 +187,241 @@ const Page = () => {
     setData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file (JPEG, PNG, etc.)');
+        return;
+      }
+      
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      setImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('title', data.title);
-      formData.append('description', data.description);
-      formData.append('category', data.category);
-      formData.append('author', data.author); // Author name from user context
-      formData.append('authorImg', data.authorImg); // Author image from user context
-      if (image) {
-        formData.append('image', image);
+      // Validate required fields
+      if (!data.title.trim() || !data.description.trim()) {
+        toast.error('Please fill in all required fields');
+        setIsSubmitting(false);
+        return;
       }
 
-      const response = await axios.post('/api/blog', formData);
+      if (!image) {
+        toast.error('Please select an image for the blog');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', data.title.trim());
+      formData.append('description', data.description.trim());
+      formData.append('category', data.category);
+      formData.append('author', data.author);
+      formData.append('authorImg', data.authorImg);
+      formData.append('image', image);
+
+      const response = await axios.post('/api/blog', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       if (response.data.success) {
-        toast.success(response.data.msg || 'Blog added successfully!');
-        setImage(null);
+        toast.success(response.data.message || 'Blog created successfully!');
+        
+        // Reset form
         setData({
           title: '',
           description: '',
           category: 'Startup',
-          author: user.username || 'Anonymous', // Reset to the logged-in user's name
-          authorImg: user.image || '/default-author-img.png', // Reset the image to the logged-in user's image
+          author: user?.username || 'Anonymous',
+          authorImg: user?.image || '/default-author-img.png',
         });
+        setImage(null);
+        setImagePreview(null);
+        
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } else {
-        toast.error('Error while adding blog');
+        toast.error(response.data.error || 'Error while creating blog');
       }
 
-      console.log(response.data);
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Something went wrong');
+      
+      if (error.response?.data?.error) {
+        toast.error(error.response.data.error);
+      } else if (error.code === 'ERR_NETWORK') {
+        toast.error('Network error. Please check your connection.');
+      } else {
+        toast.error('Something went wrong while creating the blog');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (loading || !user || user.role !== 'author') {
-    return <p className="p-10">Loading...</p>; // or a spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'author') {
+    return null; // Will redirect due to useEffect
   }
 
   return (
-    <form onSubmit={onSubmitHandler} className="pt-5 px-5 sm:pt-12 sm:pl-16">
-      <p className="text-xl">Upload Thumbnail</p>
-      <label htmlFor="image">
-        <Image
-          className="mt-4"
-          src={image ? URL.createObjectURL(image) : assets.upload_area}
-          alt="Upload Thumbnail"
-          width={140}
-          height={70}
-        />
-      </label>
-      <input
-        onChange={(e) => setImage(e.target.files[0])}
-        type="file"
-        id="image"
-        hidden
-        required
-      />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Blog Post</h1>
+        
+        <form onSubmit={onSubmitHandler} className="bg-white rounded-lg shadow-md p-6">
+          {/* Image Upload Section */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Blog Thumbnail *
+            </label>
+            <div className="flex flex-col items-start gap-4">
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-xs">
+                <label htmlFor="image" className="cursor-pointer">
+                  <Image
+                    src={imagePreview || assets.upload_area}
+                    alt="Blog thumbnail"
+                    width={200}
+                    height={120}
+                    className="object-cover mx-auto"
+                  />
+                  <p className="text-sm text-gray-500 text-center mt-2">
+                    Click to upload thumbnail
+                  </p>
+                </label>
+                <input
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  type="file"
+                  id="image"
+                  accept="image/*"
+                  className="hidden"
+                  required
+                />
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">Supported formats: JPEG, PNG, WebP. Max size: 5MB</p>
+            </div>
+          </div>
 
-      <p className="text-ml mt-4">Blog Title</p>
-      <input
-        name="title"
-        onChange={onChangeHandler}
-        value={data.title}
-        className="w-full sm:w-[500px] mt-4 px-4 py-3 border"
-        type="text"
-        placeholder="Type here"
-        required
-      />
+          {/* Title Field */}
+          <div className="mb-6">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              Blog Title *
+            </label>
+            <input
+              name="title"
+              onChange={onChangeHandler}
+              value={data.title}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              type="text"
+              placeholder="Enter blog title"
+              required
+            />
+          </div>
 
-      <p className="text-ml mt-4">Blog Description</p>
-      <textarea
-        name="description"
-        onChange={onChangeHandler}
-        value={data.description}
-        className="w-full sm:w-[500px] mt-4 px-4 py-3 border"
-        placeholder="Write content here"
-        required
-      />
+          {/* Description Field */}
+          <div className="mb-6">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              Blog Content *
+            </label>
+            <textarea
+              name="description"
+              onChange={onChangeHandler}
+              value={data.description}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Write your blog content here..."
+              rows={8}
+              required
+            />
+          </div>
 
-      <p className="text-ml mt-4">Blog Category</p>
-      <select
-        name="category"
-        onChange={onChangeHandler}
-        value={data.category}
-        className="w-40 mt-4 px-4 py-3 border text-gray-500"
-      >
-        <option value="Startup">StartUp</option>
-        <option value="Technology">Technology</option>
-        <option value="Lifestyle">Lifestyle</option>
-      </select>
+          {/* Category Field */}
+          <div className="mb-8">
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              Category *
+            </label>
+            <select
+              name="category"
+              onChange={onChangeHandler}
+              value={data.category}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="Startup">StartUp</option>
+              <option value="Technology">Technology</option>
+              <option value="Lifestyle">Lifestyle</option>
+            </select>
+          </div>
 
-      <button type="submit" className="mt-8 w-40 h-12 bg-black text-white">
-        ADD
-      </button>
-    </form>
+          {/* Author Info (hidden but included in form) */}
+          <input type="hidden" name="author" value={data.author} />
+          <input type="hidden" name="authorImg" value={data.authorImg} />
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-black text-white py-3 px-6 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Creating Blog...
+              </div>
+            ) : (
+              'PUBLISH BLOG'
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 

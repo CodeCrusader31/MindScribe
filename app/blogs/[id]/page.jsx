@@ -32,7 +32,6 @@ const Page = () => {
       setLoading(false);
     }
   };
-  
 
   const fetchComments = async () => {
     try {
@@ -46,32 +45,32 @@ const Page = () => {
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     setError("");
-  
+
     if (!user) {
       setError("You must be logged in to comment");
       return;
     }
-  
+
     if (!commentText.trim()) {
       setError("Comment cannot be empty");
       return;
     }
-  
+
     try {
       console.log("Submitting comment with data:", {
         blogSlug: blogId,
         commenter: user?.username,
-       // commenterId: user?.id,
+        // commenterId: user?.id,
         text: commentText,
       });
-    
+
       const res = await axios.post("/api/comments/comment", {
         blogSlug: blogId,
         commenter: user?.username,
         //commenterId: user?.id,
         text: commentText,
       });
-    
+
       if (res.data.success) {
         setCommentText("");
         await fetchComments(); // Refresh comments
@@ -80,9 +79,7 @@ const Page = () => {
       console.error("Error submitting comment:", err);
       setError("Failed to submit comment. Please try again.");
     }
-    
   };
-  
 
   useEffect(() => {
     if (blogId) {
@@ -111,7 +108,7 @@ const Page = () => {
     <>
       <div className="bg-gray-200 py-5 px-5 md:px-12 lg:px-28">
         <div className="flex justify-between items-center">
-          <Link href="/">
+          {/* <Link href="/">
             <Image
               className="w-[130px] sm:w-auto"
               src={assets.logo_light}
@@ -122,14 +119,14 @@ const Page = () => {
           <button className="flex items-center gap-2 font-medium py-1 px-3 sm:py-3 sm:px-6 border border-black shadow-[-7px_7px_0px_#000000]">
             Get started{" "}
             {assets.arrow_light && (
-  <Image
-    src={assets.arrow_light}
-    alt="Arrow"
-    width={20}
-    height={20}
-  />
-)}
-          </button>
+              <Image
+                src={assets.arrow_light}
+                alt="Arrow"
+                width={20}
+                height={20}
+              />
+            )}
+          </button> */}
         </div>
 
         <div className="text-center my-24">
@@ -137,16 +134,18 @@ const Page = () => {
             {data.title}
           </h1>
           {data.authorImg && (
-  <Image
-    src={data.authorImg}
-    alt={data.author || "Author Image"}
-    width={80}
-    height={80}
-    className="mx-auto mt-6 rounded-full"
-  />
-)}
+            <Image
+              src={data.authorImg}
+              alt={data.author || "Author Image"}
+              width={80}
+              height={80}
+              className="mx-auto mt-6 rounded-full"
+            />
+          )}
 
-          <p className="mt-1 pb-2 text-lg max-w-[740px] mx-auto">{data.author}</p>
+          <p className="mt-1 pb-2 text-lg max-w-[740px] mx-auto">
+            {data.author}
+          </p>
         </div>
       </div>
 
@@ -170,18 +169,25 @@ const Page = () => {
             Share this article on social media
           </p>
           <div className="flex gap-2">
-          {assets.social_media_icon1 && (
-  <Image src={assets.social_media_icon1} alt="Twitter" width={40} />
-)}
+            {assets.social_media_icon1 && (
+              <Image src={assets.social_media_icon1} alt="Twitter" width={40} />
+            )}
 
-{assets.social_media_icon2 && (
-  <Image src={assets.social_media_icon2} alt="Facebook" width={40} />
-)}
+            {assets.social_media_icon2 && (
+              <Image
+                src={assets.social_media_icon2}
+                alt="Facebook"
+                width={40}
+              />
+            )}
 
-{assets.social_media_icon3 && (
-  <Image src={assets.social_media_icon3} alt="LinkedIn" width={40} />
-)}
-
+            {assets.social_media_icon3 && (
+              <Image
+                src={assets.social_media_icon3}
+                alt="LinkedIn"
+                width={40}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -201,9 +207,7 @@ const Page = () => {
               rows={4}
               required
             />
-            {error && (
-              <p className="text-red-500 text-sm mt-1">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             <button
               type="submit"
               className="mt-2 px-6 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
@@ -217,7 +221,7 @@ const Page = () => {
             <p>
               You must be{" "}
               <Link
-                href="/login"
+                href="/auth/login"
                 className="text-blue-600 underline hover:text-blue-800"
               >
                 logged in
