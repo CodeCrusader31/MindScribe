@@ -8,7 +8,8 @@ export async function GET(request, { params }) {
     try {
       await ConnectDB();
   
-      const slug = params?.slug;
+      //const slug = params?.slug;
+       const { slug } = await params;
   
       if (!slug) {
         return NextResponse.json({ error: "Missing blog slug" }, { status: 400 });

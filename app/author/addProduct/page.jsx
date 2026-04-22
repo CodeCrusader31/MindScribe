@@ -1,146 +1,3 @@
-// 'use client';
-
-// import React, { useEffect, useState } from 'react';
-// import { useRouter } from 'next/navigation';
-// import { useAuth } from '@/context/AuthContext'; // Import your Auth context
-// import axios from 'axios';
-// import { toast } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
-// import Image from 'next/image';
-// import { assets } from '@/Assests/assets';
-
-// const Page = () => {
-//   const { user, loading } = useAuth(); // Get user data from Auth context
-//   const router = useRouter();
-//   const [image, setImage] = useState(null);
-//   const [data, setData] = useState({
-//     title: '',
-//     description: '',
-//     category: 'Startup',
-//     author: '',  // This will be set to the logged-in user's name
-//     authorImg: '', // This will be set to the logged-in user's image
-//   });
-
-//   useEffect(() => {
-//     if (!loading && (!user || user.role !== 'author')) {
-//       router.push('/auth/login'); // Redirect if user is not logged in or role is not author
-//     } else if (user) {
-//       // Set the author's name and image based on the logged-in user
-//       setData((prevData) => ({
-//         ...prevData,
-//         author: user.username || 'Anonymous',  // Default to 'Anonymous' if no name is available
-//         authorImg: user.image || '/default-author-img.png', // Default to a placeholder image if no image exists
-//       }));
-//     }
-//   }, [user, loading, router]);
-
-//   const onChangeHandler = (event) => {
-//     const { name, value } = event.target;
-//     setData((prevData) => ({ ...prevData, [name]: value }));
-//   };
-
-//   const onSubmitHandler = async (e) => {
-//     e.preventDefault();
-
-//     try {
-//       const formData = new FormData();
-//       formData.append('title', data.title);
-//       formData.append('description', data.description);
-//       formData.append('category', data.category);
-//       formData.append('author', data.author); // Author name from user context
-//       formData.append('authorImg', data.authorImg); // Author image from user context
-//       if (image) {
-//         formData.append('image', image);
-//       }
-
-//       const response = await axios.post('/api/blog', formData);
-
-//       if (response.data.success) {
-//         toast.success(response.data.msg || 'Blog added successfully!');
-//         setImage(null);
-//         setData({
-//           title: '',
-//           description: '',
-//           category: 'Startup',
-//           author: user.username || 'Anonymous', // Reset to the logged-in user's name
-//           authorImg: user.image || '/default-author-img.png', // Reset the image to the logged-in user's image
-//         });
-//       } else {
-//         toast.error('Error while adding blog');
-//       }
-
-//       console.log(response.data);
-//     } catch (error) {
-//       console.error('Error:', error);
-//       toast.error('Something went wrong');
-//     }
-//   };
-
-//   if (loading || !user || user.role !== 'author') {
-//     return <p className="p-10">Loading...</p>; // or a spinner
-//   }
-
-//   return (
-//     <form onSubmit={onSubmitHandler} className="pt-5 px-5 sm:pt-12 sm:pl-16">
-//       <p className="text-xl">Upload Thumbnail</p>
-//       <label htmlFor="image">
-//         <Image
-//           className="mt-4"
-//           src={image ? URL.createObjectURL(image) : assets.upload_area}
-//           alt="Upload Thumbnail"
-//           width={140}
-//           height={70}
-//         />
-//       </label>
-//       <input
-//         onChange={(e) => setImage(e.target.files[0])}
-//         type="file"
-//         id="image"
-//         hidden
-//         required
-//       />
-
-//       <p className="text-ml mt-4">Blog Title</p>
-//       <input
-//         name="title"
-//         onChange={onChangeHandler}
-//         value={data.title}
-//         className="w-full sm:w-[500px] mt-4 px-4 py-3 border"
-//         type="text"
-//         placeholder="Type here"
-//         required
-//       />
-
-//       <p className="text-ml mt-4">Blog Description</p>
-//       <textarea
-//         name="description"
-//         onChange={onChangeHandler}
-//         value={data.description}
-//         className="w-full sm:w-[500px] mt-4 px-4 py-3 border"
-//         placeholder="Write content here"
-//         required
-//       />
-
-//       <p className="text-ml mt-4">Blog Category</p>
-//       <select
-//         name="category"
-//         onChange={onChangeHandler}
-//         value={data.category}
-//         className="w-40 mt-4 px-4 py-3 border text-gray-500"
-//       >
-//         <option value="Startup">StartUp</option>
-//         <option value="Technology">Technology</option>
-//         <option value="Lifestyle">Lifestyle</option>
-//       </select>
-
-//       <button type="submit" className="mt-8 w-40 h-12 bg-black text-white">
-//         ADD
-//       </button>
-//     </form>
-//   );
-// };
-
-// export default Page;
 
 
 'use client';
@@ -158,7 +15,11 @@ const Page = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef(null);
-  
+  const [aiTitles, setAiTitles] = useState([]);
+  const [summary, setSummary] = useState("");
+  const [analysis, setAnalysis] = useState("");
+  const [tags, setTags] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -169,6 +30,7 @@ const Page = () => {
     author: '',
     authorImg: '',
   });
+  
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'author')) {
@@ -301,6 +163,37 @@ const Page = () => {
     return null; // Will redirect due to useEffect
   }
 
+  const generateTitles = async () => {
+  if (!data.description.trim()) {
+    toast.error("Please write some blog content first!");
+    return;
+  }
+
+  try {
+    setAiLoading(true);
+    setAiTitles([]);
+
+    const res = await fetch("/api/ai/title", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: data.description }),
+    });
+
+    const result = await res.json();
+
+    if (result.success && result.titles?.length) {
+      setAiTitles(result.titles); // titles is now [{title, type}, ...]
+    } else {
+      toast.error("Could not generate titles. Try again.");
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error("AI service unavailable.");
+  } finally {
+    setAiLoading(false);
+  }
+};
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -365,6 +258,39 @@ const Page = () => {
               placeholder="Enter blog title"
               required
             />
+            <button
+  type="button"
+  onClick={generateTitles}
+  disabled={aiLoading || !data.description.trim()}
+  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+>
+  {aiLoading ? (
+    <>
+      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+      Generating...
+    </>
+  ) : (
+    "✨ Generate AI Titles"
+  )}
+</button>
+
+{aiTitles.length > 0 && (
+  <div className="mt-3 space-y-2">
+    <p className="text-xs text-gray-500 font-medium">Click a title to use it:</p>
+    {aiTitles.map((item, index) => (
+      <div
+        key={index}
+        onClick={() => setData({ ...data, title: item.title })}
+        className="cursor-pointer bg-gray-50 border border-gray-200 hover:border-blue-400 hover:bg-blue-50 p-3 rounded-md transition-colors"
+      >
+        <span className="text-sm font-medium text-gray-800">{item.title}</span>
+        <span className="ml-2 text-xs text-blue-500 capitalize bg-blue-100 px-2 py-0.5 rounded-full">
+          {item.type}
+        </span>
+      </div>
+    ))}
+  </div>
+)}
           </div>
 
           {/* Description Field */}
