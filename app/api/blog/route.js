@@ -10,7 +10,7 @@ import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "@/lib
 // Initialize database connection
 try {
   await ConnectDB();
-  console.log("✅ Database connected successfully");
+  //console.log("✅ Database connected successfully");
 } catch (error) {
   console.error("❌ Database connection failed:", error);
 }
