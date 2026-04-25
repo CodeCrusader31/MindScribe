@@ -8,6 +8,7 @@ import Link from "next/link";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useParams } from "next/navigation";
+import { toast } from "react-toastify";
 
 const Page = () => {
   const params = useParams();
@@ -18,6 +19,8 @@ const Page = () => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [summary, setSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const fetchBlogData = async () => {
     try {
@@ -104,6 +107,36 @@ const Page = () => {
     );
   }
 
+  const generateSummary = async () => {
+      if (!data.description.trim()) {
+        toast.error("Please write some blog content first!");
+        return;
+      }
+  
+      try {
+        setIsSummarizing(true);
+        const res = await fetch("/api/ai/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: data.description }),
+        });
+  
+        const result = await res.json();
+  
+        if (result.success && result.summary) {
+          setSummary(result.summary);
+          toast.success("Summary generated!");
+        } else {
+          toast.error("Could not generate summary. Try again.");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("AI service unavailable.");
+      } finally {
+        setIsSummarizing(false);
+      }
+    };
+
   return (
     <>
       <div className="bg-gray-200 py-5 px-5 md:px-12 lg:px-28">
@@ -158,6 +191,44 @@ const Page = () => {
           alt={data.title}
           priority
         />
+        <button
+                type="button"
+                onClick={generateSummary}
+                disabled={isSummarizing || !data.description.trim()}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSummarizing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Summarizing...
+                  </>
+                ) : (
+                  "📝 Generate Summary"
+                )}
+              </button>
+
+        {summary && (
+          <div className="mt-6 p-6 bg-white border border-gray-200 shadow-sm rounded-lg">
+            <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+              ✨ AI Summary
+            </h3>
+            <p className="text-gray-700 text-lg leading-relaxed mb-4">
+              <strong>Short Summary:</strong> {summary.short_summary}
+            </p>
+            <div className="mb-4">
+              <strong className="text-gray-800">Key Takeaways:</strong>
+              <ul className="list-disc pl-6 mt-2 space-y-1 text-gray-700">
+                {summary.bullet_points?.map((pt, i) => (
+                  <li key={i}>{pt}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-md">
+              <strong className="text-blue-800 text-sm block mb-1">Social Media Post Idea:</strong>
+              <p className="text-blue-900 text-sm italic">{summary.social_media_post}</p>
+            </div>
+          </div>
+        )}
 
         <div
           className="blog-content mt-8 prose max-w-none"

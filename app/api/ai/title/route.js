@@ -31,7 +31,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    const res = await fetch("http://localhost:8000/generate-title", {
+    const res = await fetch("http://localhost:8000/title", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: body.content }),
@@ -39,10 +39,7 @@ export async function POST(req) {
 
     const data = await res.json();
 
-    // data.response is a JSON string from Gemini — parse it
-    const parsed = JSON.parse(data.response.replace(/```json|```/g, "").trim());
-
-    return NextResponse.json({ success: true, titles: parsed.titles });
+    return NextResponse.json(data);
   } catch (error) {
     console.error("AI title error:", error);
     return NextResponse.json({ success: false, titles: [] }, { status: 500 });

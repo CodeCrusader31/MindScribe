@@ -20,6 +20,8 @@ const Page = () => {
   const [analysis, setAnalysis] = useState("");
   const [tags, setTags] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [isImproving, setIsImproving] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,10 +191,80 @@ const Page = () => {
   } catch (error) {
     console.error(error);
     toast.error("AI service unavailable.");
-  } finally {
-    setAiLoading(false);
-  }
-};
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const generateSummary = async () => {
+    if (!data.description.trim()) {
+      toast.error("Please write some blog content first!");
+      return;
+    }
+
+    try {
+      setIsSummarizing(true);
+      const res = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: data.description }),
+      });
+
+      const result = await res.json();
+
+      if (result.success && result.summary) {
+        setSummary(result.summary);
+        toast.success("Summary generated!");
+      } else {
+        toast.error("Could not generate summary. Try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("AI service unavailable.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const improveContent = async () => {
+    if (!data.description.trim()) {
+      toast.error("Please write some blog content first!");
+      return;
+    }
+
+    try {
+      setIsImproving(true);
+      const res = await fetch("/api/ai/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: data.description }),
+      });
+
+      if (!res.ok || !res.body) throw new Error("Stream failed");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let improvedText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        improvedText += chunk;
+        
+        setData((prev) => ({ ...prev, description: improvedText }));
+      }
+      
+      toast.success("Content improved!");
+
+    } catch (error) {
+      console.error(error);
+      toast.error("AI service unavailable.");
+    } finally {
+      setIsImproving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -307,6 +379,52 @@ const Page = () => {
               rows={8}
               required
             />
+            <div className="flex gap-4 mt-2">
+              <button
+                type="button"
+                onClick={improveContent}
+                disabled={isImproving || !data.description.trim()}
+                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isImproving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Improving...
+                  </>
+                ) : (
+                  "🪄 Improve Content"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={generateSummary}
+                disabled={isSummarizing || !data.description.trim()}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSummarizing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Summarizing...
+                  </>
+                ) : (
+                  "📝 Generate Summary"
+                )}
+              </button>
+            </div>
+
+            {summary && (
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+                <h3 className="font-semibold text-gray-800 mb-2">AI Summary</h3>
+                <p className="text-sm text-gray-600 mb-2"><strong>Short:</strong> {summary.short_summary}</p>
+                <div className="text-sm text-gray-600 mb-2">
+                  <strong>Key Points:</strong>
+                  <ul className="list-disc pl-5 mt-1">
+                    {summary.bullet_points?.map((pt, i) => <li key={i}>{pt}</li>)}
+                  </ul>
+                </div>
+                <p className="text-sm text-gray-600"><strong>Social Media Post:</strong> {summary.social_media_post}</p>
+              </div>
+            )}
           </div>
 
           {/* Category Field */}
